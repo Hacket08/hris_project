@@ -3,33 +3,85 @@
     <c-col lg="6" md="8" xl="5">
       <c-card class="p-4">
         <c-card-body class="d-flex flex-column gap-4">
-          <h2 class="h5 text-center mb-0">Enter your authenticator code</h2>
-          <form cForm cRow class="gy-3" (ngSubmit)="onSubmit()" #mfaForm="ngForm">
-            <c-col xs="12">
-              <label cLabel for="code">6-digit code</label>
-              <input
-                cFormControl
-                id="code"
-                name="code"
-                type="text"
-                inputmode="numeric"
-                pattern="[0-9]*"
-                [(ngModel)]="code"
-                required
-                autocomplete="one-time-code"
-              />
-            </c-col>
-            @if (errorMessage()) {
+          @if (mode() === 'verify') {
+            <h2 class="h5 text-center mb-0">Enter your authenticator code</h2>
+            <form cForm cRow class="gy-3" (ngSubmit)="onSubmit()" #mfaForm="ngForm">
               <c-col xs="12">
-                <p class="text-danger mb-0">{{ errorMessage() }}</p>
+                <label cLabel for="code">6-digit code</label>
+                <input
+                  cFormControl
+                  id="code"
+                  name="code"
+                  type="text"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  [(ngModel)]="code"
+                  required
+                  autocomplete="one-time-code"
+                />
               </c-col>
+              @if (errorMessage()) {
+                <c-col xs="12">
+                  <p class="text-danger mb-0">{{ errorMessage() }}</p>
+                </c-col>
+              }
+              <c-col xs="12">
+                <button cButton class="w-100" color="primary" type="submit" [disabled]="mfaForm.invalid || submitting()">
+                  {{ submitting() ? 'Verifying…' : 'Verify' }}
+                </button>
+              </c-col>
+              <c-col xs="12" class="text-center">
+                <button cButton color="link" type="button" class="p-0" [disabled]="submitting()" (click)="startMfaReset()">
+                  Lost access to your authenticator?
+                </button>
+              </c-col>
+            </form>
+          }
+
+          @if (mode() === 'reset-qr') {
+            <h2 class="h5 text-center mb-0">Set up a new authenticator</h2>
+            <p class="mb-0">
+              Scan this QR code with an authenticator app, then enter the 6-digit code it shows.
+              Your old authenticator will stop working once this is confirmed.
+            </p>
+            @if (qrDataUrl()) {
+              <img [src]="qrDataUrl()" alt="TOTP QR code" class="align-self-center" width="220" height="220" />
             }
-            <c-col xs="12">
-              <button cButton class="w-100" color="primary" type="submit" [disabled]="mfaForm.invalid || submitting()">
-                {{ submitting() ? 'Verifying…' : 'Verify' }}
-              </button>
-            </c-col>
-          </form>
+            <p class="text-body-secondary small text-break mb-0">
+              Can't scan? Enter this manually: {{ provisioningUri() }}
+            </p>
+            <form cForm cRow class="gy-3" (ngSubmit)="onSubmit()" #resetForm="ngForm">
+              <c-col xs="12">
+                <label cLabel for="resetCode">6-digit code</label>
+                <input
+                  cFormControl
+                  id="resetCode"
+                  name="resetCode"
+                  type="text"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  [(ngModel)]="code"
+                  required
+                  autocomplete="one-time-code"
+                />
+              </c-col>
+              @if (errorMessage()) {
+                <c-col xs="12">
+                  <p class="text-danger mb-0">{{ errorMessage() }}</p>
+                </c-col>
+              }
+              <c-col xs="12">
+                <button cButton class="w-100" color="primary" type="submit" [disabled]="resetForm.invalid || submitting()">
+                  {{ submitting() ? 'Confirming…' : 'Confirm new authenticator' }}
+                </button>
+              </c-col>
+              <c-col xs="12" class="text-center">
+                <button cButton color="link" type="button" class="p-0" [disabled]="submitting()" (click)="cancelReset()">
+                  Cancel
+                </button>
+              </c-col>
+            </form>
+          }
         </c-card-body>
       </c-card>
     </c-col>

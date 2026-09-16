@@ -2,11 +2,21 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.deps import get_current_user, get_current_user_allow_pending_password_change
+from app.auth.mfa_reset import (
+    InvalidMfaPendingTokenError,
+    InvalidResetCodeError,
+    InvalidResetTokenError,
+    complete_mfa_reset,
+    start_mfa_reset,
+)
 from app.auth.models import User
 from app.auth.schemas import (
     ChangePasswordRequest,
     LoginRequest,
     LoginResponse,
+    MfaResetConfirmRequest,
+    MfaResetInitRequest,
+    MfaResetInitResponse,
     MFAVerifyRequest,
     SetupConfirmRequest,
     SetupInitRequest,
@@ -106,6 +116,52 @@ async def verify_mfa(
 
     if not verify_user_totp(user, payload.code):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid MFA code")
+
+    return TokenResponse(
+        access_token=create_access_token(str(user.id)),
+        must_change_password=user.must_change_password,
+    )
+
+
+@router.post("/mfa/reset/init", response_model=MfaResetInitResponse)
+async def mfa_reset_init(
+    payload: MfaResetInitRequest, db: AsyncSession = Depends(get_db)
+) -> MfaResetInitResponse:
+    """For an account whose enrolled TOTP secret stopped working. Requires
+    the same proof of password knowledge as normal MFA verify — a valid
+    mfa_pending_token — nothing weaker."""
+    try:
+        user_id = decode_token(payload.mfa_pending_token, expected_type="mfa_pending")
+    except InvalidTokenError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired MFA challenge"
+        ) from exc
+
+    try:
+        reset_token, mfa_secret, provisioning_uri = await start_mfa_reset(db, user_id)
+    except InvalidMfaPendingTokenError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
+
+    return MfaResetInitResponse(
+        reset_token=reset_token, mfa_secret=mfa_secret, provisioning_uri=provisioning_uri
+    )
+
+
+@router.post("/mfa/reset/confirm", response_model=TokenResponse)
+async def mfa_reset_confirm(
+    payload: MfaResetConfirmRequest, db: AsyncSession = Depends(get_db)
+) -> TokenResponse:
+    """Only replaces the stored secret once a real code from the new one
+    proves enrollment worked — same principle as the setup wizard. Issues a
+    normal access token, since this also completes login."""
+    try:
+        user = await complete_mfa_reset(db, payload.reset_token, payload.code)
+    except InvalidResetTokenError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except InvalidResetCodeError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except InvalidMfaPendingTokenError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
 
     return TokenResponse(
         access_token=create_access_token(str(user.id)),

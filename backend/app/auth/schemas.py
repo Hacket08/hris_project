@@ -62,3 +62,18 @@ class SetupInitResponse(BaseModel):
 class SetupConfirmRequest(BaseModel):
     setup_token: str
     code: str
+
+
+class MfaResetInitRequest(BaseModel):
+    mfa_pending_token: str
+
+
+class MfaResetInitResponse(BaseModel):
+    reset_token: str
+    mfa_secret: str
+    provisioning_uri: str
+
+
+class MfaResetConfirmRequest(BaseModel):
+    reset_token: str
+    code: str

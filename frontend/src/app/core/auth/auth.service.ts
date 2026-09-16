@@ -26,6 +26,12 @@ interface SetupInitResponse {
   provisioning_uri: string;
 }
 
+interface MfaResetInitResponse {
+  reset_token: string;
+  mfa_secret: string;
+  provisioning_uri: string;
+}
+
 const ACCESS_TOKEN_KEY = 'hris_access_token';
 const MUST_CHANGE_PASSWORD_KEY = 'hris_must_change_password';
 
@@ -95,6 +101,34 @@ export class AuthService {
     const res = await firstValueFrom(
       this.http.post<TokenResponse>(`${environment.apiBaseUrl}/auth/mfa/verify`, {
         mfa_pending_token: this.mfaPendingToken,
+        code,
+      })
+    );
+    this.mfaPendingToken = null;
+    this.setAccessToken(res.access_token);
+    this.setMustChangePassword(res.must_change_password);
+    if (!res.must_change_password) {
+      await this.loadCurrentUser();
+    }
+  }
+
+  /** For an account whose enrolled authenticator stopped working — requires
+   * the same pending MFA challenge the normal verify step uses, nothing weaker. */
+  async initMfaReset(): Promise<MfaResetInitResponse> {
+    if (!this.mfaPendingToken) {
+      throw new Error('No pending MFA challenge — log in again.');
+    }
+    return firstValueFrom(
+      this.http.post<MfaResetInitResponse>(`${environment.apiBaseUrl}/auth/mfa/reset/init`, {
+        mfa_pending_token: this.mfaPendingToken,
+      })
+    );
+  }
+
+  async confirmMfaReset(resetToken: string, code: string): Promise<void> {
+    const res = await firstValueFrom(
+      this.http.post<TokenResponse>(`${environment.apiBaseUrl}/auth/mfa/reset/confirm`, {
+        reset_token: resetToken,
         code,
       })
     );
