@@ -49,12 +49,17 @@ Angular 22 peer requirement; see `frontend/package.json`). This needs no Angular
 system and keeps both frontends on the same major version, per the dev plan's own stated goal.
 
 **Known trade-off, flagged rather than hidden:** Angular 18.2 has several disclosed high-severity
-XSS advisories (`npm audit`), the same class of vulnerability Payroll's README cites as its reason
-for wanting Angular 21+. Since Payroll's *actual* code is also on 18.2 (not 21 as documented),
-**both systems currently carry this exposure**. Resolving it means upgrading both frontends to
-Angular 22 + `@coreui/angular@5.7.28` together — a larger, cross-system change outside this
-Phase 0 build's scope. Recommend the business owner/tech lead decide whether that upgrade happens
-before or after Phase 1, rather than each system drifting independently.
+XSS advisories (`npm audit`), independently confirmed via a real `npm audit --audit-level=high`
+run (GHSA-g93w-mfhg-p222, GHSA-jrmj-c5cx-3cw6, GHSA-v4hv-rgfq-gp49, and others, for
+`@angular/core <=19.2.25`). **Both HRIS and Payroll carry this exposure** (Payroll's actual
+installed code is also 18.2, not 21 as an unrelated stale doc once claimed — see
+`../ai_employees/deliverables/payroll_system/repo/README.md`'s superseded banner).
+
+**Decision (business owner, 2026-09-16): risk accepted for now.** Not blocking Phase 1 on a
+cross-system Angular 22 upgrade. Tracked as a **pre-production / Phase 2+ item for both systems**
+— the real fix is upgrading both frontends to Angular 22 + `@coreui/angular@5.7.28` together (not
+independently, to avoid drift). See `../payroll-system/README.md`'s matching note. Revisit before
+either system goes anywhere near production traffic.
 
 ## Repository layout
 
@@ -193,6 +198,6 @@ SLAs) matter before Phase 2/5, not Phase 0, per the dev plan's own sequencing no
 here. #8 (SSO vs. internal+MFA) doesn't block Phase 0 either: the dev plan already defaults to
 internal+MFA for the MVP, which is exactly what got built, swappable later if SSO is confirmed.
 
-Also unresolved, separate from the above: the **Angular 18 XSS exposure** described in the Stack
-section — a decision for the business owner/tech lead, not something to silently pick a side on
-here.
+Separate from the above: the **Angular 18 XSS exposure** described in the Stack section has been
+resolved as a business decision (risk accepted, tracked as a Phase 2+ item) — see that section
+for details, not something re-litigated here.
