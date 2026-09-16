@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import {
   ButtonDirective,
   CardBodyComponent,
@@ -16,6 +17,7 @@ import { AuthService } from '../../core/auth/auth.service';
   standalone: true,
   imports: [
     CommonModule,
+    RouterLink,
     ButtonDirective,
     CardBodyComponent,
     CardComponent,
@@ -33,6 +35,10 @@ import { AuthService } from '../../core/auth/auth.service';
               @if (auth.currentUser(); as user) {
                 <p class="mb-0">Signed in as {{ user.username }} ({{ user.role }})</p>
               }
+              <div class="d-flex justify-content-center gap-2">
+                <a cButton color="primary" routerLink="/employees">Employees</a>
+                <a cButton color="primary" routerLink="/org">Org chart</a>
+              </div>
               <button cButton color="secondary" (click)="auth.logout()">Sign out</button>
             </c-card-body>
           </c-card>

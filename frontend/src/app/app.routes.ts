@@ -29,6 +29,36 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'employees',
+    loadComponent: () =>
+      import('./features/employees/employee-list/employee-list.component').then(
+        (m) => m.EmployeeListComponent
+      ),
+    canActivate: [authGuard],
+  },
+  {
+    path: 'employees/new',
+    loadComponent: () =>
+      import('./features/employees/employee-form/employee-form.component').then(
+        (m) => m.EmployeeFormComponent
+      ),
+    canActivate: [authGuard],
+  },
+  {
+    path: 'employees/:id',
+    loadComponent: () =>
+      import('./features/employees/employee-detail/employee-detail.component').then(
+        (m) => m.EmployeeDetailComponent
+      ),
+    canActivate: [authGuard],
+  },
+  {
+    path: 'org',
+    loadComponent: () =>
+      import('./features/org/org-page/org-page.component').then((m) => m.OrgPageComponent),
+    canActivate: [authGuard],
+  },
+  {
     path: '',
     loadComponent: () => import('./features/home/home.component').then((m) => m.HomeComponent),
     canActivate: [authGuard],

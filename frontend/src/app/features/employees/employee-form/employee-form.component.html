@@ -1,0 +1,73 @@
+<c-container class="py-4">
+  <c-row class="justify-content-center">
+    <c-col lg="8">
+      <c-card>
+        <c-card-body class="d-flex flex-column gap-3">
+          <h2 class="h5 mb-0">Add employee</h2>
+          <form cForm cRow class="gy-3" (ngSubmit)="onSubmit()" #employeeForm="ngForm">
+            <c-col md="6">
+              <label cLabel for="firstName">First name</label>
+              <input cFormControl id="firstName" name="firstName" [(ngModel)]="firstName" required />
+            </c-col>
+            <c-col md="6">
+              <label cLabel for="lastName">Last name</label>
+              <input cFormControl id="lastName" name="lastName" [(ngModel)]="lastName" required />
+            </c-col>
+            <c-col md="6">
+              <label cLabel for="contactInfo">Contact info</label>
+              <input cFormControl id="contactInfo" name="contactInfo" [(ngModel)]="contactInfo" />
+            </c-col>
+            <c-col md="6">
+              <label cLabel for="hireDate">Hire date</label>
+              <input cFormControl id="hireDate" name="hireDate" type="date" [(ngModel)]="hireDate" required />
+            </c-col>
+            <c-col md="6">
+              <label cLabel for="employmentStatus">Employment status</label>
+              <select cSelect id="employmentStatus" name="employmentStatus" [(ngModel)]="employmentStatus" required>
+                <option value="probationary">Probationary</option>
+                <option value="regular">Regular</option>
+                <option value="separated">Separated</option>
+              </select>
+            </c-col>
+            <c-col md="6">
+              <label cLabel for="positionId">Position</label>
+              <select cSelect id="positionId" name="positionId" [(ngModel)]="positionId" required>
+                <option value="" disabled selected>Select a position</option>
+                @for (position of positions(); track position.id) {
+                  <option [value]="position.id">{{ position.title }} ({{ position.department_name }})</option>
+                }
+              </select>
+            </c-col>
+
+            <c-col xs="12"><hr class="my-1" /><p class="text-body-secondary small mb-0">Government IDs (optional, encrypted at rest)</p></c-col>
+            <c-col md="6">
+              <label cLabel for="sssNumber">SSS number</label>
+              <input cFormControl id="sssNumber" name="sssNumber" [(ngModel)]="sssNumber" />
+            </c-col>
+            <c-col md="6">
+              <label cLabel for="philhealthNumber">PhilHealth number</label>
+              <input cFormControl id="philhealthNumber" name="philhealthNumber" [(ngModel)]="philhealthNumber" />
+            </c-col>
+            <c-col md="6">
+              <label cLabel for="pagibigNumber">Pag-IBIG number</label>
+              <input cFormControl id="pagibigNumber" name="pagibigNumber" [(ngModel)]="pagibigNumber" />
+            </c-col>
+            <c-col md="6">
+              <label cLabel for="tin">TIN</label>
+              <input cFormControl id="tin" name="tin" [(ngModel)]="tin" />
+            </c-col>
+
+            @if (errorMessage()) {
+              <c-col xs="12"><p class="text-danger mb-0">{{ errorMessage() }}</p></c-col>
+            }
+            <c-col xs="12">
+              <button cButton color="primary" type="submit" [disabled]="employeeForm.invalid || submitting()">
+                {{ submitting() ? 'Saving…' : 'Save' }}
+              </button>
+            </c-col>
+          </form>
+        </c-card-body>
+      </c-card>
+    </c-col>
+  </c-row>
+</c-container>

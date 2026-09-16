@@ -1,0 +1,117 @@
+<c-container class="py-4">
+  <c-row class="gy-4">
+    <c-col md="4">
+      <c-card>
+        <c-card-body class="d-flex flex-column gap-3">
+          <h2 class="h6 mb-0">Departments</h2>
+          <ul class="list-unstyled mb-0">
+            @for (d of departments(); track d.id) {
+              <li>{{ d.name }}</li>
+            }
+          </ul>
+          <div class="d-flex gap-2">
+            <input cFormControl placeholder="New department" [(ngModel)]="newDepartmentName" name="newDepartmentName" />
+            <button cButton color="primary" [disabled]="!newDepartmentName" (click)="onAddDepartment()">Add</button>
+          </div>
+        </c-card-body>
+      </c-card>
+    </c-col>
+
+    <c-col md="8">
+      <c-card>
+        <c-card-body class="d-flex flex-column gap-3">
+          <h2 class="h6 mb-0">Org chart</h2>
+          @if (positions().length === 0) {
+            <p class="text-body-secondary mb-0">No positions yet.</p>
+          } @else {
+            <table class="table table-sm mb-0">
+              <thead>
+                <tr>
+                  <th>Position</th>
+                  <th>Department</th>
+                  <th>Reports to</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (p of positions(); track p.id) {
+                  <tr>
+                    <td>{{ p.title }}</td>
+                    <td>{{ p.department_name }}</td>
+                    <td>{{ p.reports_to_title || '(top of chart)' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+
+          <hr class="my-1" />
+          <p class="text-body-secondary small mb-0">Add a position</p>
+          <div class="d-flex flex-wrap gap-2 align-items-end">
+            <div>
+              <label cLabel for="newPositionTitle">Title</label>
+              <input cFormControl id="newPositionTitle" [(ngModel)]="newPositionTitle" name="newPositionTitle" />
+            </div>
+            <div>
+              <label cLabel for="newPositionDepartmentId">Department</label>
+              <select cSelect id="newPositionDepartmentId" [(ngModel)]="newPositionDepartmentId" name="newPositionDepartmentId">
+                <option value="" disabled selected>Select</option>
+                @for (d of departments(); track d.id) {
+                  <option [value]="d.id">{{ d.name }}</option>
+                }
+              </select>
+            </div>
+            <div>
+              <label cLabel for="newPositionReportsTo">Reports to</label>
+              <select cSelect id="newPositionReportsTo" [(ngModel)]="newPositionReportsTo" name="newPositionReportsTo">
+                <option value="">(top of chart)</option>
+                @for (p of positions(); track p.id) {
+                  <option [value]="p.id">{{ p.title }}</option>
+                }
+              </select>
+            </div>
+            <button
+              cButton
+              color="primary"
+              [disabled]="!newPositionTitle || !newPositionDepartmentId"
+              (click)="onAddPosition()"
+            >
+              Add position
+            </button>
+          </div>
+        </c-card-body>
+      </c-card>
+
+      <c-card class="mt-4">
+        <c-card-body>
+          <h2 class="h6 mb-3">Headcount</h2>
+          @if (headcount().length === 0) {
+            <p class="text-body-secondary mb-0">No employees yet.</p>
+          } @else {
+            <table class="table table-sm mb-0">
+              <thead>
+                <tr>
+                  <th>Department</th>
+                  <th>Position</th>
+                  <th>Headcount</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (h of headcount(); track h.position_id) {
+                  <tr>
+                    <td>{{ h.department_name }}</td>
+                    <td>{{ h.position_title }}</td>
+                    <td>{{ h.headcount }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </c-card-body>
+      </c-card>
+
+      @if (errorMessage()) {
+        <p class="text-danger small mt-2 mb-0">{{ errorMessage() }}</p>
+      }
+    </c-col>
+  </c-row>
+</c-container>
