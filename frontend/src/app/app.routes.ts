@@ -1,12 +1,19 @@
 import { Routes } from '@angular/router';
 
 import { authGuard } from './core/auth/auth.guard';
+import { redirectToSetupIfRequiredGuard, setupNotYetCompleteGuard } from './core/auth/setup.guard';
 
 export const routes: Routes = [
+  {
+    path: 'setup',
+    loadComponent: () => import('./features/auth/setup/setup.component').then((m) => m.SetupComponent),
+    canActivate: [setupNotYetCompleteGuard],
+  },
   {
     path: 'login',
     loadComponent: () =>
       import('./features/auth/login/login.component').then((m) => m.LoginComponent),
+    canActivate: [redirectToSetupIfRequiredGuard],
   },
   {
     path: 'mfa-verify',

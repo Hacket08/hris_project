@@ -92,16 +92,27 @@ docker compose up --build
 (Ports are offset from Payroll's 8000/4200/5432 so both systems' local stacks can run
 side by side without colliding.)
 
-There is no self-registration endpoint (internal staff tool in Phase 0 — employee self-service
-lands in Phase 4). Bootstrap the first user directly against the DB:
+There is no self-registration endpoint for ordinary use (internal staff tool in Phase 0 —
+employee self-service lands in Phase 4). The very first account is the one exception: visiting
+http://localhost:4201 with an empty database shows a one-time **setup wizard** instead of the
+login screen (BR-18/FR-23/AC-23) — pick a real username/password, scan the shown TOTP QR code
+into an authenticator app, and the account is only actually created once you enter a valid code
+proving enrollment worked. This replaced an earlier CLI-based bootstrap approach that printed a
+system-generated credential to the terminal — dropped because it required terminal access, which
+isn't always available to whoever needs to set the system up. The wizard closes permanently
+(`404`/`410` on its own endpoints) the instant any account exists, and the resulting account is
+an ordinary `hr_admin` — no special role, no bypass logic anywhere in the login path.
+
+For every account after the first, an existing HR Admin creates it directly against the DB:
 
 ```bash
 docker compose exec backend python -m scripts.create_user \
   --username jane.hradmin --email jane@example.com --role hr_admin
 ```
 
-Then sign in at http://localhost:4201/login — first login walks you through TOTP MFA
-enrollment (scan the QR code / use the printed secret with any authenticator app).
+This path sets `must_change_password`, so that account is forced onto its own real password on
+first login before it can do anything else (FR-22/BRULE-09) — the setup wizard's account skips
+this, since it's already a real, self-chosen password.
 
 ## Running tests
 
@@ -165,6 +176,30 @@ major. Since Phase 0's auth screens don't render any icons yet, `app.config.ts` 
 an icon set at all; wire up `IconSetService` (module-based API, documented in
 `node_modules/@coreui/icons-angular/README.md`) when a Phase 1+ screen actually needs one.
 
+## Setup wizard — verified end-to-end (2026-09-16)
+
+Real HTTP calls against a genuinely restarted live server, not pytest alone: fresh empty DB →
+`GET /auth/setup-status` reports `true` → login on the empty DB correctly rejected (`401`, no
+backdoor of any kind) → `POST /auth/setup/init` returns a real TOTP secret + provisioning URI →
+a wrong code is rejected (`400`) without discarding the pending setup → the real code creates the
+account (`204`) → setup permanently closes (`410` on a second `init`) → the real chosen password
+logs in and passes MFA exactly like any other account, `must_change_password=false`. 10 new
+backend tests (24/24 total), `ruff`/`black` clean, frontend `ng lint`/`ng build` (dev+prod)/
+`ng test` all pass. **Not verified:** a live browser click-through of the wizard UI — no browser
+automation was available in this session, so the frontend side is covered by the API-level
+verification above plus the existing headless-Chrome unit test, not a manual visual check. Treat
+the actual rendered UI (QR code image, form flow) as unverified until someone loads it in a
+real browser.
+
+Known, accepted scope limit: pending setup state (chosen username/password hash/MFA secret,
+between `init` and `confirm`) lives in an in-memory dict, not the database — consistent with
+Phase 0 having no Redis/session store yet, and fine because this is inherently a single person,
+single sitting, once per system's whole lifetime. A backend restart mid-wizard just means
+starting over; no account is ever half-created. See `app/auth/setup.py` for the same reasoning
+on the check-then-insert race against a second concurrent completion, which isn't fully atomic
+for the same reason — acceptable for a one-time, one-person flow, not something to carry forward
+if this pattern is ever reused for something with real concurrent users.
+
 ## Known deviations / judgment calls from `12_development_plan.md`
 
 - **Schema scope narrower than Payroll's own README claims for itself.** The dev plan's Phase 0
@@ -183,6 +218,15 @@ an icon set at all; wire up `IconSetService` (module-based API, documented in
   infrastructure in `app/auth/deps.py` for Phase 1+ routers to use) — mirrors Payroll's own actual
   Phase 0 scope (its `router.py` has no `/users` GET/POST either, despite an earlier build log
   claiming otherwise).
+- **The first-account mechanism changed mid-build.** An earlier version of this repo auto-created
+  a default admin on startup with a random, printed-once credential (a `bootstrap.py` module).
+  That approach — and two further asks to make its login path skip password/MFA checks entirely,
+  the second escalating to a *permanent* MFA exemption for a "Super User" account — were declined:
+  the first two after direct risk disclosure and explicit confirmation each request wasn't taken,
+  the last one refused outright by Claude Code's own auto-mode safety classifier before any code
+  for it was even written. The actual underlying problem (no terminal access, no authenticator
+  app) had nothing to do with wanting weaker auth, and is solved properly by the setup wizard
+  above instead — no bypass code exists anywhere in this repo's login path.
 
 ## Why the build stops here (Phase 0 → Phase 1 boundary)
 

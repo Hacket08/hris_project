@@ -8,6 +8,10 @@ from app.auth.schemas import (
     LoginRequest,
     LoginResponse,
     MFAVerifyRequest,
+    SetupConfirmRequest,
+    SetupInitRequest,
+    SetupInitResponse,
+    SetupStatusResponse,
     TokenResponse,
     UserRead,
 )
@@ -18,6 +22,14 @@ from app.auth.service import (
     get_user_by_id,
     verify_user_totp,
 )
+from app.auth.setup import (
+    InvalidSetupCodeError,
+    InvalidSetupTokenError,
+    SetupNotAllowedError,
+    complete_setup,
+    is_setup_required,
+    start_setup,
+)
 from app.core.db import get_db
 from app.core.security import (
     InvalidTokenError,
@@ -27,6 +39,41 @@ from app.core.security import (
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+@router.get("/setup-status", response_model=SetupStatusResponse)
+async def setup_status(db: AsyncSession = Depends(get_db)) -> SetupStatusResponse:
+    return SetupStatusResponse(setup_required=await is_setup_required(db))
+
+
+@router.post("/setup/init", response_model=SetupInitResponse)
+async def setup_init(
+    payload: SetupInitRequest, db: AsyncSession = Depends(get_db)
+) -> SetupInitResponse:
+    try:
+        setup_token, mfa_secret, provisioning_uri = await start_setup(
+            db, payload.username, payload.email, payload.password
+        )
+    except SetupNotAllowedError as exc:
+        raise HTTPException(status_code=status.HTTP_410_GONE, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+    return SetupInitResponse(
+        setup_token=setup_token, mfa_secret=mfa_secret, provisioning_uri=provisioning_uri
+    )
+
+
+@router.post("/setup/confirm", status_code=status.HTTP_204_NO_CONTENT)
+async def setup_confirm(payload: SetupConfirmRequest, db: AsyncSession = Depends(get_db)) -> None:
+    try:
+        await complete_setup(db, payload.setup_token, payload.code)
+    except InvalidSetupTokenError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except SetupNotAllowedError as exc:
+        raise HTTPException(status_code=status.HTTP_410_GONE, detail=str(exc)) from exc
+    except InvalidSetupCodeError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
 
 @router.post("/login", response_model=LoginResponse)

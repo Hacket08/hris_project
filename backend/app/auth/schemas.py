@@ -41,3 +41,24 @@ class UserRead(BaseModel):
 class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str
+
+
+class SetupStatusResponse(BaseModel):
+    setup_required: bool
+
+
+class SetupInitRequest(BaseModel):
+    username: str
+    email: EmailStr
+    password: str
+
+
+class SetupInitResponse(BaseModel):
+    setup_token: str
+    mfa_secret: str
+    provisioning_uri: str
+
+
+class SetupConfirmRequest(BaseModel):
+    setup_token: str
+    code: str

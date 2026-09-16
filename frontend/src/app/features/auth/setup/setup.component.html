@@ -1,0 +1,120 @@
+<c-container>
+  <c-row class="justify-content-center w-100">
+    <c-col lg="6" md="8" xl="5">
+      <c-card class="p-4">
+        <c-card-body class="d-flex flex-column gap-4">
+          <h2 class="h5 text-center mb-0">Set up HRIS</h2>
+          <p class="text-body-secondary text-center small mb-0">
+            No account exists yet. Create the first administrator account to get started.
+          </p>
+
+          @if (step() === 'account') {
+            <form cForm cRow class="gy-3" (ngSubmit)="onSubmitAccount()" #accountForm="ngForm">
+              <c-col xs="12">
+                <label cLabel for="username">Username</label>
+                <input
+                  cFormControl
+                  id="username"
+                  name="username"
+                  type="text"
+                  [(ngModel)]="username"
+                  required
+                  autocomplete="username"
+                />
+              </c-col>
+              <c-col xs="12">
+                <label cLabel for="email">Email</label>
+                <input
+                  cFormControl
+                  id="email"
+                  name="email"
+                  type="email"
+                  [(ngModel)]="email"
+                  required
+                  autocomplete="email"
+                />
+              </c-col>
+              <c-col xs="12">
+                <label cLabel for="password">Password</label>
+                <input
+                  cFormControl
+                  id="password"
+                  name="password"
+                  type="password"
+                  [(ngModel)]="password"
+                  required
+                  minlength="8"
+                  autocomplete="new-password"
+                />
+              </c-col>
+              <c-col xs="12">
+                <label cLabel for="confirmPassword">Confirm password</label>
+                <input
+                  cFormControl
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  [(ngModel)]="confirmPassword"
+                  required
+                  minlength="8"
+                  autocomplete="new-password"
+                />
+              </c-col>
+              @if (errorMessage()) {
+                <c-col xs="12">
+                  <p class="text-danger mb-0">{{ errorMessage() }}</p>
+                </c-col>
+              }
+              <c-col xs="12">
+                <button cButton class="w-100" color="primary" type="submit" [disabled]="accountForm.invalid || submitting()">
+                  {{ submitting() ? 'Continuing…' : 'Continue' }}
+                </button>
+              </c-col>
+            </form>
+          }
+
+          @if (step() === 'mfa') {
+            <div class="d-flex flex-column gap-3">
+              <p class="mb-0">
+                Scan this QR code with an authenticator app (Google Authenticator, Authy, etc.),
+                then enter the 6-digit code it shows to finish setup.
+              </p>
+              @if (qrDataUrl()) {
+                <img [src]="qrDataUrl()" alt="TOTP QR code" class="align-self-center" width="220" height="220" />
+              }
+              <p class="text-body-secondary small text-break mb-0">
+                Can't scan? Enter this manually: {{ provisioningUri() }}
+              </p>
+              <form cForm cRow class="gy-3" (ngSubmit)="onSubmitCode()" #codeForm="ngForm">
+                <c-col xs="12">
+                  <label cLabel for="code">6-digit code</label>
+                  <input
+                    cFormControl
+                    id="code"
+                    name="code"
+                    type="text"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
+                    [(ngModel)]="code"
+                    required
+                    autocomplete="one-time-code"
+                  />
+                </c-col>
+                @if (errorMessage()) {
+                  <c-col xs="12">
+                    <p class="text-danger mb-0">{{ errorMessage() }}</p>
+                  </c-col>
+                }
+                <c-col xs="12">
+                  <button cButton class="w-100" color="primary" type="submit" [disabled]="codeForm.invalid || submitting()">
+                    {{ submitting() ? 'Verifying…' : 'Finish setup' }}
+                  </button>
+                </c-col>
+              </form>
+            </div>
+          }
+        </c-card-body>
+      </c-card>
+    </c-col>
+  </c-row>
+</c-container>

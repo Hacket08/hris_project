@@ -16,6 +16,16 @@ interface TokenResponse {
   must_change_password: boolean;
 }
 
+interface SetupStatusResponse {
+  setup_required: boolean;
+}
+
+interface SetupInitResponse {
+  setup_token: string;
+  mfa_secret: string;
+  provisioning_uri: string;
+}
+
 const ACCESS_TOKEN_KEY = 'hris_access_token';
 const MUST_CHANGE_PASSWORD_KEY = 'hris_must_change_password';
 
@@ -39,6 +49,33 @@ export class AuthService {
 
   get accessToken(): string | null {
     return this.accessTokenSignal();
+  }
+
+  /** No auth required — used to decide whether to show the setup wizard or the login screen. */
+  async checkSetupRequired(): Promise<boolean> {
+    const res = await firstValueFrom(
+      this.http.get<SetupStatusResponse>(`${environment.apiBaseUrl}/auth/setup-status`)
+    );
+    return res.setup_required;
+  }
+
+  async initSetup(username: string, email: string, password: string): Promise<SetupInitResponse> {
+    return firstValueFrom(
+      this.http.post<SetupInitResponse>(`${environment.apiBaseUrl}/auth/setup/init`, {
+        username,
+        email,
+        password,
+      })
+    );
+  }
+
+  async confirmSetup(setupToken: string, code: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post(`${environment.apiBaseUrl}/auth/setup/confirm`, {
+        setup_token: setupToken,
+        code,
+      })
+    );
   }
 
   async login(username: string, password: string): Promise<void> {
