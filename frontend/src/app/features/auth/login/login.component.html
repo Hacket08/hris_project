@@ -1,0 +1,47 @@
+<c-container>
+  <c-row class="justify-content-center w-100">
+    <c-col lg="6" md="8" xl="5">
+      <c-card class="p-4">
+        <c-card-body class="d-flex flex-column gap-4">
+          <h2 class="h5 text-center mb-0">HRIS System</h2>
+          <form cForm cRow class="gy-3" (ngSubmit)="onSubmit()" #loginForm="ngForm">
+            <c-col xs="12">
+              <label cLabel for="username">Username</label>
+              <input
+                cFormControl
+                id="username"
+                name="username"
+                type="text"
+                [(ngModel)]="username"
+                required
+                autocomplete="username"
+              />
+            </c-col>
+            <c-col xs="12">
+              <label cLabel for="password">Password</label>
+              <input
+                cFormControl
+                id="password"
+                name="password"
+                type="password"
+                [(ngModel)]="password"
+                required
+                autocomplete="current-password"
+              />
+            </c-col>
+            @if (errorMessage()) {
+              <c-col xs="12">
+                <p class="text-danger mb-0">{{ errorMessage() }}</p>
+              </c-col>
+            }
+            <c-col xs="12">
+              <button cButton class="w-100" color="primary" type="submit" [disabled]="loginForm.invalid || submitting()">
+                {{ submitting() ? 'Signing in…' : 'Sign in' }}
+              </button>
+            </c-col>
+          </form>
+        </c-card-body>
+      </c-card>
+    </c-col>
+  </c-row>
+</c-container>

@@ -1,0 +1,60 @@
+[project]
+name = "hris-system-backend"
+version = "0.1.0"
+description = "HRIS System (Philippines MVP) — FastAPI backend"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "sqlalchemy[asyncio]>=2.0",
+    "asyncpg>=0.29",
+    "alembic>=1.13",
+    "pydantic[email]>=2.7",
+    "pydantic-settings>=2.3",
+    "pyotp>=2.9",
+    "bcrypt>=4.1",
+    "pyjwt>=2.8",
+    "cryptography>=42.0",
+    "python-multipart>=0.0.9",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2",
+    "pytest-asyncio>=0.23",
+    "httpx>=0.27",
+    "ruff>=0.5",
+    "black>=24.4",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+# Session-scoped: app/core/db.py's `engine` is a module-level singleton (correct
+# for the real app, which only ever runs one event loop). pytest-asyncio's
+# default per-test loop rebinds it each test, which asyncpg on Windows surfaces
+# as "Event loop is closed" during connection teardown on a later test.
+# (Same fix Payroll's backend needed — see its tests/conftest.py.)
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+# B008: FastAPI's `Depends(...)` as an argument default is the framework's
+# documented pattern, not the mutable-default-argument bug this rule targets.
+ignore = ["B008"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]

@@ -1,0 +1,112 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+env:
+  POSTGRES_DB: hris
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: postgres
+  HRIS_APP_DB_USER: hris_app
+  HRIS_APP_DB_PASSWORD: hris_app_ci_password
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql+asyncpg://hris_app:hris_app_ci_password@localhost:5432/hris
+      DATABASE_ADMIN_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/hris
+      APP_DB_ROLE: hris_app
+      JWT_SECRET_KEY: ci-only-secret-not-used-anywhere-real-0123456789
+      FIELD_ENCRYPTION_KEY: bt58Vha1LtQltjCg0dn3lLYAo3TChJFVsU4B7gy80Kw= # CI-only placeholder, not a real key
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install backend package
+        run: pip install -e ".[dev]"
+
+      - name: Lint (ruff)
+        run: ruff check app tests scripts
+
+      - name: Format check (black)
+        run: black --check app tests scripts
+
+      # Provisions the restricted app DB role exactly the way
+      # docker/init-db.sh does locally — LOGIN + password never lives in a
+      # migration file (see alembic/versions/0001_phase0_foundations.py).
+      - name: Create restricted app DB role
+        run: |
+          PGPASSWORD=$POSTGRES_PASSWORD psql -h localhost -U $POSTGRES_USER -d $POSTGRES_DB <<-EOSQL
+            DO \$\$
+            BEGIN
+              IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${HRIS_APP_DB_USER}') THEN
+                CREATE ROLE ${HRIS_APP_DB_USER} WITH LOGIN PASSWORD '${HRIS_APP_DB_PASSWORD}';
+              END IF;
+            END
+            \$\$;
+            GRANT CONNECT ON DATABASE ${POSTGRES_DB} TO ${HRIS_APP_DB_USER};
+            GRANT USAGE ON SCHEMA public TO ${HRIS_APP_DB_USER};
+          EOSQL
+
+      - name: Run migrations
+        run: alembic upgrade head
+
+      # Phase 0 exit criterion from 12_development_plan.md §10: "A user can
+      # log in with MFA; REVOKE on audit_log verified in CI."
+      # test_audit_log_lockdown.py connects as the restricted role and
+      # asserts UPDATE/DELETE fail.
+      - name: Run tests (unit + Postgres-backed integration)
+        run: pytest -v
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint (ESLint)
+        run: npx ng lint
+
+      - name: Unit tests (headless Chrome)
+        run: npx ng test --watch=false --browsers=ChromeHeadless
+
+      - name: Build (production)
+        run: npx ng build --configuration production

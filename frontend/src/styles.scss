@@ -1,0 +1,9 @@
+/* Global styles. CoreUI's own CSS is loaded via angular.json's "styles" array
+   (@coreui/coreui + @coreui/icons) — this file is for app-specific overrides only. */
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+}
