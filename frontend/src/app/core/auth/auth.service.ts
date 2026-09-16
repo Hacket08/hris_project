@@ -13,9 +13,11 @@ interface LoginResponse {
 interface TokenResponse {
   access_token: string;
   token_type: string;
+  must_change_password: boolean;
 }
 
 const ACCESS_TOKEN_KEY = 'hris_access_token';
+const MUST_CHANGE_PASSWORD_KEY = 'hris_must_change_password';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -26,10 +28,14 @@ export class AuthService {
     sessionStorage.getItem(ACCESS_TOKEN_KEY)
   );
   private readonly currentUserSignal = signal<User | null>(null);
+  private readonly mustChangePasswordSignal = signal<boolean>(
+    sessionStorage.getItem(MUST_CHANGE_PASSWORD_KEY) === 'true'
+  );
   private mfaPendingToken: string | null = null;
 
   readonly isAuthenticated = computed(() => this.accessTokenSignal() !== null);
   readonly currentUser = this.currentUserSignal.asReadonly();
+  readonly mustChangePassword = this.mustChangePasswordSignal.asReadonly();
 
   get accessToken(): string | null {
     return this.accessTokenSignal();
@@ -57,7 +63,10 @@ export class AuthService {
     );
     this.mfaPendingToken = null;
     this.setAccessToken(res.access_token);
-    await this.loadCurrentUser();
+    this.setMustChangePassword(res.must_change_password);
+    if (!res.must_change_password) {
+      await this.loadCurrentUser();
+    }
   }
 
   async loadCurrentUser(): Promise<void> {
@@ -67,8 +76,22 @@ export class AuthService {
     this.currentUserSignal.set(user);
   }
 
+  /** Server-side enforcement is the real boundary (backend app/auth/deps.py) —
+   * this only clears the client-side flag once the backend confirms success. */
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post(`${environment.apiBaseUrl}/auth/change-password`, {
+        current_password: currentPassword,
+        new_password: newPassword,
+      })
+    );
+    this.setMustChangePassword(false);
+    await this.loadCurrentUser();
+  }
+
   logout(): void {
     this.setAccessToken(null);
+    this.setMustChangePassword(false);
     this.currentUserSignal.set(null);
     this.router.navigateByUrl('/login');
   }
@@ -79,6 +102,15 @@ export class AuthService {
       sessionStorage.setItem(ACCESS_TOKEN_KEY, token);
     } else {
       sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+    }
+  }
+
+  private setMustChangePassword(required: boolean): void {
+    this.mustChangePasswordSignal.set(required);
+    if (required) {
+      sessionStorage.setItem(MUST_CHANGE_PASSWORD_KEY, 'true');
+    } else {
+      sessionStorage.removeItem(MUST_CHANGE_PASSWORD_KEY);
     }
   }
 }

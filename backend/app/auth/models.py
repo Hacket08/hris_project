@@ -30,6 +30,11 @@ class User(Base):
     mfa_secret_encrypted: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[UserRole] = mapped_column(Enum(UserRole, name="user_role"), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    # BR-17/FR-22/BRULE-09: true for the auto-bootstrapped admin and any account
+    # created via scripts.create_user, since someone other than the account's
+    # owner chose the initial password. Enforced server-side in app/auth/deps.py,
+    # not just a frontend redirect.
+    must_change_password: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

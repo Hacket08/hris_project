@@ -17,7 +17,7 @@ import {
 import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
-  selector: 'app-mfa-verify',
+  selector: 'app-change-password',
   standalone: true,
   imports: [
     CommonModule,
@@ -33,24 +33,34 @@ import { AuthService } from '../../../core/auth/auth.service';
     RowComponent,
   ],
   host: { class: 'bg-body-tertiary min-vh-100 d-flex flex-row align-items-center' },
-  templateUrl: './mfa-verify.component.html',
+  templateUrl: './change-password.component.html',
 })
-export class MfaVerifyComponent {
+export class ChangePasswordComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
-  code = '';
+  currentPassword = '';
+  newPassword = '';
+  confirmPassword = '';
   readonly submitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
 
   async onSubmit(): Promise<void> {
     this.errorMessage.set(null);
+
+    if (this.newPassword !== this.confirmPassword) {
+      this.errorMessage.set('New password and confirmation do not match.');
+      return;
+    }
+
     this.submitting.set(true);
     try {
-      await this.auth.verifyMfa(this.code);
-      await this.router.navigateByUrl(this.auth.mustChangePassword() ? '/change-password' : '/');
-    } catch {
-      this.errorMessage.set('Invalid or expired code.');
+      await this.auth.changePassword(this.currentPassword, this.newPassword);
+      await this.router.navigateByUrl('/');
+    } catch (err: unknown) {
+      const detail =
+        (err as { error?: { detail?: string } })?.error?.detail ?? 'Could not change password.';
+      this.errorMessage.set(detail);
     } finally {
       this.submitting.set(false);
     }

@@ -28,6 +28,7 @@ async def create_user(username: str, email: str, role: UserRole, password: str) 
             password_hash=hash_password(password),
             mfa_secret_encrypted=encrypt_field(mfa_secret),
             role=role,
+            must_change_password=True,  # someone other than the account owner chose this password
         )
         db.add(user)
         await db.commit()

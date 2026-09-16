@@ -25,6 +25,7 @@ class MFAVerifyRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    must_change_password: bool
 
 
 class UserRead(BaseModel):
@@ -35,3 +36,8 @@ class UserRead(BaseModel):
     is_active: bool
 
     model_config = {"from_attributes": True}
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str

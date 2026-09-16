@@ -13,10 +13,13 @@ from app.core.security import InvalidTokenError, decode_token
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 
 
-async def get_current_user(
+async def get_current_user_allow_pending_password_change(
     token: str | None = Depends(oauth2_scheme),
     db: AsyncSession = Depends(get_db),
 ) -> User:
+    """Identical to get_current_user but does not block accounts with
+    must_change_password set — used only by POST /auth/change-password,
+    which must be reachable precisely for such accounts."""
     credentials_error = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -32,6 +35,20 @@ async def get_current_user(
     user = await get_user_by_id(db, user_id)
     if user is None or not user.is_active:
         raise credentials_error
+    return user
+
+
+async def get_current_user(
+    user: User = Depends(get_current_user_allow_pending_password_change),
+) -> User:
+    """The real security boundary (BR-17/FR-22/BRULE-09): every route except
+    POST /auth/change-password is blocked, server-side, while a password
+    change is pending — not just a frontend redirect."""
+    if user.must_change_password:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Password change required before continuing",
+        )
     return user
 
 

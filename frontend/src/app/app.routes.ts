@@ -14,6 +14,14 @@ export const routes: Routes = [
       import('./features/auth/mfa-verify/mfa-verify.component').then((m) => m.MfaVerifyComponent),
   },
   {
+    path: 'change-password',
+    loadComponent: () =>
+      import('./features/auth/change-password/change-password.component').then(
+        (m) => m.ChangePasswordComponent
+      ),
+    canActivate: [authGuard],
+  },
+  {
     path: '',
     loadComponent: () => import('./features/home/home.component').then((m) => m.HomeComponent),
     canActivate: [authGuard],
