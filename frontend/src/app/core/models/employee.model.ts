@@ -19,7 +19,31 @@ export interface EmploymentHistoryEntry {
   created_at: string;
 }
 
-export interface EmployeeDetail {
+/** Personal-info/employment fields added 2026-09-16 (05_data_model.md) —
+ * grounded in standard Philippine 201-file/HR recordkeeping conventions. */
+interface EmployeePersonalInfo {
+  middle_name?: string | null;
+  suffix?: string | null;
+  nickname?: string | null;
+  maiden_name?: string | null;
+  gender?: string | null;
+  birthdate?: string | null;
+  birth_place?: string | null;
+  civil_status?: string | null;
+  spouse_name?: string | null;
+  is_solo_parent?: boolean;
+  is_minimum_wage_earner?: boolean;
+  religion?: string | null;
+  nationality?: string | null;
+  corporate_email?: string | null;
+  personal_email?: string | null;
+  permanent_address?: string | null;
+  current_address?: string | null;
+  regularization_date?: string | null;
+  position_title?: string | null;
+}
+
+export interface EmployeeDetail extends EmployeePersonalInfo {
   id: string;
   first_name: string;
   last_name: string;
@@ -34,7 +58,7 @@ export interface EmployeeDetail {
   history: EmploymentHistoryEntry[];
 }
 
-export interface EmployeeCreate {
+export interface EmployeeCreate extends EmployeePersonalInfo {
   first_name: string;
   last_name: string;
   contact_info?: string;
@@ -47,7 +71,7 @@ export interface EmployeeCreate {
   tin?: string;
 }
 
-export interface EmployeeUpdate {
+export interface EmployeeUpdate extends EmployeePersonalInfo {
   first_name?: string;
   last_name?: string;
   contact_info?: string;

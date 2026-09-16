@@ -14,6 +14,36 @@ from app.employees.schemas import (
     EmploymentHistoryRead,
 )
 
+# Plain (non-encrypted) fields settable on create/update via simple attribute
+# copy — everything except position_id/employment_status (handled specially
+# for EmploymentHistory) and the four encrypted gov't-ID fields (handled via
+# _encrypt_or_none below).
+_PLAIN_FIELDS = (
+    "first_name",
+    "last_name",
+    "middle_name",
+    "suffix",
+    "nickname",
+    "maiden_name",
+    "gender",
+    "birthdate",
+    "birth_place",
+    "civil_status",
+    "spouse_name",
+    "is_solo_parent",
+    "is_minimum_wage_earner",
+    "religion",
+    "nationality",
+    "corporate_email",
+    "personal_email",
+    "permanent_address",
+    "current_address",
+    "contact_info",
+    "regularization_date",
+    "position_title",
+    "default_schedule_id",
+)
+
 
 def _encrypt_or_none(value: str | None) -> str | None:
     return encrypt_field(value) if value else None
@@ -27,9 +57,6 @@ async def create_employee(
     db: AsyncSession, data: EmployeeCreate, changed_by: uuid.UUID
 ) -> Employee:
     employee = Employee(
-        first_name=data.first_name,
-        last_name=data.last_name,
-        contact_info=data.contact_info,
         employment_status=data.employment_status,
         hire_date=data.hire_date,
         position_id=data.position_id,
@@ -37,6 +64,7 @@ async def create_employee(
         philhealth_number_encrypted=_encrypt_or_none(data.philhealth_number),
         pagibig_number_encrypted=_encrypt_or_none(data.pagibig_number),
         tin_encrypted=_encrypt_or_none(data.tin),
+        **{field: getattr(data, field) for field in _PLAIN_FIELDS},
     )
     db.add(employee)
     await db.flush()
@@ -86,9 +114,6 @@ async def build_employee_detail(db: AsyncSession, employee: Employee) -> Employe
     history = await get_employment_history(db, employee.id)
     return EmployeeDetail(
         id=employee.id,
-        first_name=employee.first_name,
-        last_name=employee.last_name,
-        contact_info=employee.contact_info,
         employment_status=employee.employment_status,
         hire_date=employee.hire_date,
         position_id=employee.position_id,
@@ -97,6 +122,7 @@ async def build_employee_detail(db: AsyncSession, employee: Employee) -> Employe
         pagibig_number=_decrypt_or_none(employee.pagibig_number_encrypted),
         tin=_decrypt_or_none(employee.tin_encrypted),
         history=[EmploymentHistoryRead.model_validate(h) for h in history],
+        **{field: getattr(employee, field) for field in _PLAIN_FIELDS},
     )
 
 
@@ -133,12 +159,11 @@ async def update_employee(
         )
         employee.employment_status = data.employment_status
 
-    if data.first_name is not None:
-        employee.first_name = data.first_name
-    if data.last_name is not None:
-        employee.last_name = data.last_name
-    if data.contact_info is not None:
-        employee.contact_info = data.contact_info
+    for field in _PLAIN_FIELDS:
+        value = getattr(data, field)
+        if value is not None:
+            setattr(employee, field, value)
+
     if data.sss_number is not None:
         employee.sss_number_encrypted = _encrypt_or_none(data.sss_number)
     if data.philhealth_number is not None:

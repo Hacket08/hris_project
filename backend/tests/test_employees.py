@@ -221,6 +221,76 @@ async def test_status_change_also_creates_history_row(client, hr_admin_token, tw
     assert status_changes[0]["new_value"] == "regular"
 
 
+async def test_personal_info_fields_persist_and_are_optional(client, hr_admin_token, two_positions):
+    """05_data_model.md's 2026-09-16 field expansion — all new fields are
+    optional (a bare-minimum record must still work, per Phase 1's original
+    scope) but round-trip correctly when provided."""
+    pos_a, _ = two_positions
+
+    # Minimal record — none of the new fields — must still work.
+    minimal = await client.post(
+        "/employees",
+        json={
+            "first_name": "Juan",
+            "last_name": "Reyes",
+            "employment_status": "probationary",
+            "hire_date": "2026-09-16",
+            "position_id": pos_a["id"],
+        },
+        headers=_auth(hr_admin_token),
+    )
+    assert minimal.status_code == 200, minimal.text
+    assert minimal.json()["middle_name"] is None
+    assert minimal.json()["is_solo_parent"] is False
+
+    full = await client.post(
+        "/employees",
+        json={
+            "first_name": "Jane",
+            "last_name": "Dela Cruz",
+            "middle_name": "Santos",
+            "suffix": "Jr.",
+            "nickname": "Janey",
+            "maiden_name": "Santos",
+            "gender": "female",
+            "birthdate": "1995-03-14",
+            "birth_place": "Manila",
+            "civil_status": "single",
+            "spouse_name": None,
+            "is_solo_parent": True,
+            "is_minimum_wage_earner": False,
+            "religion": "Roman Catholic",
+            "nationality": "Filipino",
+            "corporate_email": "jane.delacruz@company.example",
+            "personal_email": "jane@example.com",
+            "permanent_address": "123 Rizal St., Manila",
+            "current_address": "456 Bonifacio Ave., Quezon City",
+            "employment_status": "regular",
+            "hire_date": "2026-09-16",
+            "regularization_date": "2026-12-16",
+            "position_title": "HR Associate",
+            "position_id": pos_a["id"],
+        },
+        headers=_auth(hr_admin_token),
+    )
+    assert full.status_code == 200, full.text
+    body = full.json()
+    assert body["middle_name"] == "Santos"
+    assert body["is_solo_parent"] is True
+    assert body["religion"] == "Roman Catholic"
+    assert body["position_title"] == "HR Associate"
+    assert body["regularization_date"] == "2026-12-16"
+
+    # Persisted, not just echoed back — fetching independently confirms it.
+    refetched = await client.get(f"/employees/{body['id']}", headers=_auth(hr_admin_token))
+    assert refetched.json()["nationality"] == "Filipino"
+    assert refetched.json()["current_address"] == "456 Bonifacio Ave., Quezon City"
+
+    # List view is unaffected by the expansion — still lean.
+    listed = (await client.get("/employees", headers=_auth(hr_admin_token))).json()
+    assert "middle_name" not in listed[0]
+
+
 async def test_get_nonexistent_employee_404s(client, hr_admin_token):
     import uuid
 

@@ -59,6 +59,27 @@ export class EmployeeFormComponent implements OnInit {
   pagibigNumber = '';
   tin = '';
 
+  // Personal-info/employment fields added 2026-09-16 (05_data_model.md).
+  middleName = '';
+  suffix = '';
+  nickname = '';
+  maidenName = '';
+  gender = '';
+  birthdate = '';
+  birthPlace = '';
+  civilStatus = '';
+  spouseName = '';
+  isSoloParent = false;
+  isMinimumWageEarner = false;
+  religion = '';
+  nationality = '';
+  corporateEmail = '';
+  personalEmail = '';
+  permanentAddress = '';
+  currentAddress = '';
+  regularizationDate = '';
+  positionTitle = '';
+
   async ngOnInit(): Promise<void> {
     this.positions.set(await this.org.listPositions());
   }
@@ -78,6 +99,25 @@ export class EmployeeFormComponent implements OnInit {
         philhealth_number: this.philhealthNumber || undefined,
         pagibig_number: this.pagibigNumber || undefined,
         tin: this.tin || undefined,
+        middle_name: this.middleName || undefined,
+        suffix: this.suffix || undefined,
+        nickname: this.nickname || undefined,
+        maiden_name: this.maidenName || undefined,
+        gender: this.gender || undefined,
+        birthdate: this.birthdate || undefined,
+        birth_place: this.birthPlace || undefined,
+        civil_status: this.civilStatus || undefined,
+        spouse_name: this.spouseName || undefined,
+        is_solo_parent: this.isSoloParent,
+        is_minimum_wage_earner: this.isMinimumWageEarner,
+        religion: this.religion || undefined,
+        nationality: this.nationality || undefined,
+        corporate_email: this.corporateEmail || undefined,
+        personal_email: this.personalEmail || undefined,
+        permanent_address: this.permanentAddress || undefined,
+        current_address: this.currentAddress || undefined,
+        regularization_date: this.regularizationDate || undefined,
+        position_title: this.positionTitle || undefined,
       });
       await this.router.navigate(['/employees', created.id]);
     } catch (err: unknown) {

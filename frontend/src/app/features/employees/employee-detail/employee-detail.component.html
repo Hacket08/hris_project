@@ -4,10 +4,18 @@
       <c-col md="6">
         <c-card>
           <c-card-body class="d-flex flex-column gap-2">
-            <h2 class="h5 mb-2">{{ emp.last_name }}, {{ emp.first_name }}</h2>
+            <h2 class="h5 mb-2">
+              {{ emp.last_name }}, {{ emp.first_name }} {{ emp.middle_name || '' }}
+              @if (emp.suffix) { {{ emp.suffix }} }
+              @if (emp.nickname) { <span class="text-body-secondary small">"{{ emp.nickname }}"</span> }
+            </h2>
             <p class="mb-0"><strong>Status:</strong> {{ emp.employment_status }}</p>
             <p class="mb-0"><strong>Hire date:</strong> {{ emp.hire_date }}</p>
+            <p class="mb-0"><strong>Regularization date:</strong> {{ emp.regularization_date || '—' }}</p>
+            <p class="mb-0"><strong>Job title:</strong> {{ emp.position_title || '—' }}</p>
             <p class="mb-0"><strong>Contact:</strong> {{ emp.contact_info || '—' }}</p>
+            <p class="mb-0"><strong>Corporate email:</strong> {{ emp.corporate_email || '—' }}</p>
+            <p class="mb-0"><strong>Personal email:</strong> {{ emp.personal_email || '—' }}</p>
             <p class="mb-0"><strong>SSS:</strong> {{ emp.sss_number || '—' }}</p>
             <p class="mb-0"><strong>PhilHealth:</strong> {{ emp.philhealth_number || '—' }}</p>
             <p class="mb-0"><strong>Pag-IBIG:</strong> {{ emp.pagibig_number || '—' }}</p>
@@ -26,6 +34,26 @@
             @if (errorMessage()) {
               <p class="text-danger small mb-0">{{ errorMessage() }}</p>
             }
+          </c-card-body>
+        </c-card>
+      </c-col>
+
+      <c-col md="6">
+        <c-card>
+          <c-card-body class="d-flex flex-column gap-2">
+            <h3 class="h6 mb-2">Personal information</h3>
+            <p class="mb-0"><strong>Maiden name:</strong> {{ emp.maiden_name || '—' }}</p>
+            <p class="mb-0"><strong>Gender:</strong> {{ emp.gender || '—' }}</p>
+            <p class="mb-0"><strong>Birthdate:</strong> {{ emp.birthdate || '—' }}</p>
+            <p class="mb-0"><strong>Birth place:</strong> {{ emp.birth_place || '—' }}</p>
+            <p class="mb-0"><strong>Civil status:</strong> {{ emp.civil_status || '—' }}</p>
+            <p class="mb-0"><strong>Spouse name:</strong> {{ emp.spouse_name || '—' }}</p>
+            <p class="mb-0"><strong>Religion:</strong> {{ emp.religion || '—' }}</p>
+            <p class="mb-0"><strong>Nationality:</strong> {{ emp.nationality || '—' }}</p>
+            <p class="mb-0"><strong>Permanent address:</strong> {{ emp.permanent_address || '—' }}</p>
+            <p class="mb-0"><strong>Current address:</strong> {{ emp.current_address || '—' }}</p>
+            <p class="mb-0"><strong>Solo parent (RA 8972):</strong> {{ emp.is_solo_parent ? 'Yes' : 'No' }}</p>
+            <p class="mb-0"><strong>Minimum wage earner:</strong> {{ emp.is_minimum_wage_earner ? 'Yes' : 'No' }}</p>
           </c-card-body>
         </c-card>
       </c-col>

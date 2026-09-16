@@ -2,7 +2,7 @@ import uuid
 from datetime import date, datetime
 from enum import StrEnum
 
-from sqlalchemy import Date, DateTime, Enum, ForeignKey, String, func
+from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -28,11 +28,42 @@ class Employee(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     first_name: Mapped[str] = mapped_column(String(150), nullable=False)
     last_name: Mapped[str] = mapped_column(String(150), nullable=False)
+    # Personal-info fields (05_data_model.md, expanded 2026-09-16, grounded in
+    # standard Philippine 201-file/HR recordkeeping conventions — see that
+    # doc's provenance note). All nullable: Phase 1 doesn't mandate collecting
+    # every field at hire time.
+    middle_name: Mapped[str | None] = mapped_column(String(150), nullable=True)
+    suffix: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    nickname: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    maiden_name: Mapped[str | None] = mapped_column(String(150), nullable=True)
+    gender: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    birthdate: Mapped[date | None] = mapped_column(Date, nullable=True)
+    birth_place: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    civil_status: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    spouse_name: Mapped[str | None] = mapped_column(String(150), nullable=True)
+    # RA 8972 (BRULE-05) and a real PH statutory tax-exemption status (TRAIN
+    # law) respectively — not general recordkeeping trivia.
+    is_solo_parent: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_minimum_wage_earner: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    religion: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    nationality: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    corporate_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    personal_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    permanent_address: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    current_address: Mapped[str | None] = mapped_column(String(500), nullable=True)
     contact_info: Mapped[str | None] = mapped_column(String(255), nullable=True)
     employment_status: Mapped[EmploymentStatus] = mapped_column(
         Enum(EmploymentStatus, name="employment_status"), nullable=False
     )
     hire_date: Mapped[date] = mapped_column(Date, nullable=False)
+    regularization_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    # Job title (e.g. "HR Associate") — distinct from Position, which is where
+    # they sit in the org/department hierarchy, not what they're called.
+    position_title: Mapped[str | None] = mapped_column(String(150), nullable=True)
+    # Placeholder for Phase 2 Time & Attendance — no `schedule` table exists
+    # yet, so this is a plain nullable column, not a real FK constraint. Add
+    # the constraint once that table exists rather than migrating twice.
+    default_schedule_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     position_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("position.id"), nullable=False
     )

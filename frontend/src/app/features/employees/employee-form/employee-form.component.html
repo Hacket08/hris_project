@@ -38,6 +38,95 @@
                 }
               </select>
             </c-col>
+            <c-col md="6">
+              <label cLabel for="positionTitle">Job title</label>
+              <input cFormControl id="positionTitle" name="positionTitle" [(ngModel)]="positionTitle" placeholder="e.g. HR Associate" />
+            </c-col>
+            <c-col md="6">
+              <label cLabel for="regularizationDate">Regularization date</label>
+              <input cFormControl id="regularizationDate" name="regularizationDate" type="date" [(ngModel)]="regularizationDate" />
+            </c-col>
+
+            <c-col xs="12"><hr class="my-1" /><p class="text-body-secondary small mb-0">Personal information (optional)</p></c-col>
+            <c-col md="4">
+              <label cLabel for="middleName">Middle name</label>
+              <input cFormControl id="middleName" name="middleName" [(ngModel)]="middleName" />
+            </c-col>
+            <c-col md="4">
+              <label cLabel for="suffix">Suffix</label>
+              <input cFormControl id="suffix" name="suffix" [(ngModel)]="suffix" placeholder="Jr., III, etc." />
+            </c-col>
+            <c-col md="4">
+              <label cLabel for="nickname">Nickname</label>
+              <input cFormControl id="nickname" name="nickname" [(ngModel)]="nickname" />
+            </c-col>
+            <c-col md="4">
+              <label cLabel for="maidenName">Maiden name</label>
+              <input cFormControl id="maidenName" name="maidenName" [(ngModel)]="maidenName" />
+            </c-col>
+            <c-col md="4">
+              <label cLabel for="gender">Gender</label>
+              <input cFormControl id="gender" name="gender" [(ngModel)]="gender" />
+            </c-col>
+            <c-col md="4">
+              <label cLabel for="birthdate">Birthdate</label>
+              <input cFormControl id="birthdate" name="birthdate" type="date" [(ngModel)]="birthdate" />
+            </c-col>
+            <c-col md="6">
+              <label cLabel for="birthPlace">Birth place</label>
+              <input cFormControl id="birthPlace" name="birthPlace" [(ngModel)]="birthPlace" />
+            </c-col>
+            <c-col md="6">
+              <label cLabel for="civilStatus">Civil status</label>
+              <select cSelect id="civilStatus" name="civilStatus" [(ngModel)]="civilStatus">
+                <option value="">— Not specified —</option>
+                <option value="single">Single</option>
+                <option value="married">Married</option>
+                <option value="widowed">Widowed</option>
+                <option value="separated">Separated</option>
+                <option value="annulled">Annulled</option>
+              </select>
+            </c-col>
+            <c-col md="6">
+              <label cLabel for="spouseName">Spouse name</label>
+              <input cFormControl id="spouseName" name="spouseName" [(ngModel)]="spouseName" />
+            </c-col>
+            <c-col md="6">
+              <label cLabel for="religion">Religion</label>
+              <input cFormControl id="religion" name="religion" [(ngModel)]="religion" />
+            </c-col>
+            <c-col md="6">
+              <label cLabel for="nationality">Nationality</label>
+              <input cFormControl id="nationality" name="nationality" [(ngModel)]="nationality" />
+            </c-col>
+            <c-col md="6">
+              <label cLabel for="corporateEmail">Corporate email</label>
+              <input cFormControl id="corporateEmail" name="corporateEmail" type="email" [(ngModel)]="corporateEmail" />
+            </c-col>
+            <c-col md="6">
+              <label cLabel for="personalEmail">Personal email</label>
+              <input cFormControl id="personalEmail" name="personalEmail" type="email" [(ngModel)]="personalEmail" />
+            </c-col>
+            <c-col md="6">
+              <label cLabel for="permanentAddress">Permanent address</label>
+              <input cFormControl id="permanentAddress" name="permanentAddress" [(ngModel)]="permanentAddress" />
+            </c-col>
+            <c-col md="6">
+              <label cLabel for="currentAddress">Current address</label>
+              <input cFormControl id="currentAddress" name="currentAddress" [(ngModel)]="currentAddress" />
+            </c-col>
+            <c-col md="6" class="d-flex align-items-center">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="isSoloParent" name="isSoloParent" [(ngModel)]="isSoloParent" />
+                <label class="form-check-label" for="isSoloParent">Solo parent (RA 8972)</label>
+              </div>
+            </c-col>
+            <c-col md="6" class="d-flex align-items-center">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="isMinimumWageEarner" name="isMinimumWageEarner" [(ngModel)]="isMinimumWageEarner" />
+                <label class="form-check-label" for="isMinimumWageEarner">Minimum wage earner (TRAIN law exemption)</label>
+              </div>
+            </c-col>
 
             <c-col xs="12"><hr class="my-1" /><p class="text-body-secondary small mb-0">Government IDs (optional, encrypted at rest)</p></c-col>
             <c-col md="6">
